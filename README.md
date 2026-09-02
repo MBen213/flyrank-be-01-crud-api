@@ -1,8 +1,12 @@
-# Task API
+# 🚀 Task API
 
-A simple RESTful CRUD API for managing a to-do list, built with Node.js and Express.
+A simple RESTful CRUD API for managing a to-do list, built with **Node.js** and **Express.js** as part of the **FlyRank AI Internship — Backend AI Engineering track**.
 
-## Features
+The API provides complete task management functionality, input validation, proper HTTP status codes, and interactive API documentation using Swagger UI.
+
+---
+
+## ✨ Features
 
 - Create tasks
 - Get all tasks
@@ -11,18 +15,42 @@ A simple RESTful CRUD API for managing a to-do list, built with Node.js and Expr
 - Delete tasks
 - Input validation
 - Proper HTTP status codes
+- 404 handling for non-existent tasks
 - Interactive Swagger UI documentation
 - In-memory data storage
+- RESTful API design
 
-## Tech Stack
+---
+
+## 🛠️ Tech Stack
+
+- **Node.js**
+- **Express.js**
+- **JavaScript**
+- **Swagger UI Express**
+- **In-memory data storage**
+
+---
+
+## 📋 Prerequisites
+
+Make sure you have the following installed:
 
 - Node.js
-- Express.js
-- Swagger UI Express
-- JavaScript
-- In-memory data storage
+- npm
+- Git
 
-## Installation
+You can verify your installation with:
+
+```bash
+node --version
+npm --version
+git --version
+```
+
+---
+
+## 📦 Installation
 
 Clone the repository:
 
@@ -37,7 +65,9 @@ Install the dependencies:
 npm install
 ```
 
-## Run the API
+---
+
+## ▶️ Run the API
 
 Start the server with:
 
@@ -45,23 +75,33 @@ Start the server with:
 node server.js
 ```
 
-The API will run at:
+The API will be available at:
 
 ```text
 http://localhost:3000
 ```
 
-## API Documentation
+You should see:
 
-Swagger UI is available at:
+```text
+Server running at http://localhost:3000
+```
+
+---
+
+## 📚 API Documentation
+
+Interactive Swagger UI documentation is available at:
 
 ```text
 http://localhost:3000/docs
 ```
 
-Swagger UI provides an interactive interface for testing all CRUD operations.
+Swagger UI allows you to test all CRUD operations directly from the browser using the **Try it out** functionality.
 
-## Endpoints
+---
+
+## 🔗 API Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -73,38 +113,100 @@ Swagger UI provides an interactive interface for testing all CRUD operations.
 | PUT | `/tasks/:id` | Update a task |
 | DELETE | `/tasks/:id` | Delete a task |
 
-## Example Requests
+---
 
-### Get API information
+## 🧪 Example Requests
+
+> On Windows PowerShell, use `curl.exe` instead of `curl`.
+
+### Get API Information
 
 ```bash
-curl -i http://localhost:3000/
+curl.exe -i http://localhost:3000/
 ```
 
-### Health check
+Example response:
 
-```bash
-curl -i http://localhost:3000/health
+```json
+{
+  "name": "Task API",
+  "version": "1.0",
+  "endpoints": ["/tasks"]
+}
 ```
 
-### Get all tasks
+---
+
+### Health Check
 
 ```bash
-curl -i http://localhost:3000/tasks
+curl.exe -i http://localhost:3000/health
 ```
 
-### Get a task by ID
+Example response:
 
-```bash
-curl -i http://localhost:3000/tasks/1
+```json
+{
+  "status": "ok"
+}
 ```
 
-### Create a task
+---
+
+### Get All Tasks
 
 ```bash
-curl -i -X POST http://localhost:3000/tasks \
-  -H "Content-Type: application/json" \
-  -d "{\"title\":\"Buy milk\"}"
+curl.exe -i http://localhost:3000/tasks
+```
+
+Example response:
+
+```json
+[
+  {
+    "id": 1,
+    "title": "Learn Node.js",
+    "done": false
+  },
+  {
+    "id": 2,
+    "title": "Build a REST API",
+    "done": false
+  },
+  {
+    "id": 3,
+    "title": "Practice Git",
+    "done": true
+  }
+]
+```
+
+---
+
+### Get a Task by ID
+
+```bash
+curl.exe -i http://localhost:3000/tasks/1
+```
+
+Example response:
+
+```json
+{
+  "id": 1,
+  "title": "Learn Node.js",
+  "done": false
+}
+```
+
+---
+
+### Create a Task
+
+```bash
+curl.exe -i -X POST http://localhost:3000/tasks `
+  -H "Content-Type: application/json" `
+  -d '{"title":"Buy milk"}'
 ```
 
 Example response:
@@ -117,12 +219,20 @@ Example response:
 }
 ```
 
-### Update a task
+HTTP status:
+
+```text
+201 Created
+```
+
+---
+
+### Update a Task
 
 ```bash
-curl -i -X PUT http://localhost:3000/tasks/1 \
-  -H "Content-Type: application/json" \
-  -d "{\"title\":\"Learn Express\",\"done\":true}"
+curl.exe -i -X PUT http://localhost:3000/tasks/1 `
+  -H "Content-Type: application/json" `
+  -d '{"title":"Learn Express","done":true}'
 ```
 
 Example response:
@@ -135,27 +245,39 @@ Example response:
 }
 ```
 
-### Delete a task
+HTTP status:
 
-```bash
-curl -i -X DELETE http://localhost:3000/tasks/1
+```text
+200 OK
 ```
 
-A successful deletion returns:
+---
+
+### Delete a Task
+
+```bash
+curl.exe -i -X DELETE http://localhost:3000/tasks/1
+```
+
+Successful deletion returns:
 
 ```text
 HTTP/1.1 204 No Content
 ```
 
-## Validation
+The response body is empty.
+
+---
+
+## ✅ Validation
 
 The API validates task data when creating and updating tasks.
 
-### Create task validation
+### Create Task Validation
 
 The `title` field is required when creating a task.
 
-Example invalid request:
+Invalid request:
 
 ```json
 {
@@ -177,7 +299,9 @@ Status code:
 400 Bad Request
 ```
 
-### Update task validation
+---
+
+### Update Task Validation
 
 When updating a task:
 
@@ -198,19 +322,49 @@ Status code:
 400 Bad Request
 ```
 
-## HTTP Status Codes
+---
+
+## ❌ Error Handling
+
+The API returns `404 Not Found` when a requested task does not exist.
+
+Example:
+
+```bash
+curl.exe -i http://localhost:3000/tasks/999
+```
+
+Response:
+
+```json
+{
+  "error": "Task 999 not found"
+}
+```
+
+Status code:
+
+```text
+404 Not Found
+```
+
+---
+
+## 📊 HTTP Status Codes
 
 | Status Code | Meaning |
 |-------------|---------|
-| 200 | Request successful |
-| 201 | Resource created successfully |
-| 204 | Resource deleted successfully |
-| 400 | Invalid request data |
-| 404 | Task not found |
+| `200` | Request successful |
+| `201` | Resource created successfully |
+| `204` | Resource deleted successfully |
+| `400` | Invalid request data |
+| `404` | Task not found |
 
-## Swagger UI
+---
 
-The API includes interactive Swagger UI documentation.
+## 🖥️ Swagger UI
+
+The project includes interactive Swagger UI documentation for the complete CRUD API.
 
 Open:
 
@@ -218,7 +372,7 @@ Open:
 http://localhost:3000/docs
 ```
 
-The Swagger documentation covers the complete CRUD API:
+The Swagger documentation covers:
 
 - `GET /tasks`
 - `POST /tasks`
@@ -230,36 +384,105 @@ The Swagger documentation covers the complete CRUD API:
 
 ![Swagger UI](docs/swagger-ui.png)
 
-## Project Structure
+---
+
+## 🧾 API Test Output
+
+The following tests were executed locally using `curl.exe`.
+
+### GET `/`
+
+```text
+PS C:\Users\PC\Desktop\flyrank-be-01-crud-api> curl.exe -i http://localhost:3000/
+HTTP/1.1 200 OK
+X-Powered-By: Express
+Content-Type: application/json; charset=utf-8
+Content-Length: 58
+ETag: W/"3a-MI5kmM1z/AHKxM8xo8cNqUThTqA"
+Date: Wed, 02 Sep 2026 21:32:40 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"name":"Task API","version":"1.0","endpoints":["/tasks"]}
+```
+
+### GET `/health`
+
+```text
+PS C:\Users\PC\Desktop\flyrank-be-01-crud-api> curl.exe -i http://localhost:3000/health
+HTTP/1.1 200 OK
+X-Powered-By: Express
+Content-Type: application/json; charset=utf-8
+Content-Length: 15
+ETag: W/"f-VaSQ4oDUiZblZNAEkkN+sX+q3Sg"
+Date: Wed, 02 Sep 2026 21:32:48 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"status":"ok"}
+```
+
+### GET `/tasks`
+
+```text
+PS C:\Users\PC\Desktop\flyrank-be-01-crud-api> curl.exe -i http://localhost:3000/tasks
+HTTP/1.1 200 OK
+X-Powered-By: Express
+Content-Type: application/json; charset=utf-8
+Content-Length: 140
+ETag: W/"8c-Jy7qBrmoqcNXUHmc/szqgoSozgw"
+Date: Wed, 02 Sep 2026 21:32:58 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+[{"id":1,"title":"Learn Node.js","done":false},{"id":2,"title":"Build a REST API","done":false},{"id":3,"title":"Practice Git","done":true}]
+```
+
+---
+
+## 📁 Project Structure
 
 ```text
 flyrank-be-01-crud-api/
+│
 ├── docs/
 │   └── swagger-ui.png
-├── node_modules/
+│
+├── .gitignore
 ├── package.json
 ├── package-lock.json
 ├── server.js
 └── README.md
 ```
 
-## Data Storage
+> `node_modules/` is intentionally excluded from the repository through `.gitignore`.
 
-This project uses an in-memory array to store tasks.
+---
 
-This means that all task data is reset whenever the server restarts.
+## 💾 Data Storage
 
-No external database is required.
+This project uses an **in-memory array** to store tasks.
 
-## Testing
+This means that:
+
+- No external database is required.
+- Task data is stored only while the server is running.
+- All tasks are reset whenever the server restarts.
+
+This approach keeps the project simple and focused on REST API fundamentals.
+
+---
+
+## 🧪 Testing
 
 The API was tested using:
 
 - Swagger UI
-- `curl`
+- `curl.exe`
 - Browser requests for GET endpoints
+- PowerShell HTTP requests
 
-The CRUD operations were tested with successful and error scenarios, including:
+The following scenarios were tested:
 
 - Creating a task
 - Reading all tasks
@@ -268,21 +491,72 @@ The CRUD operations were tested with successful and error scenarios, including:
 - Deleting a task
 - Invalid task data
 - Requesting a non-existent task
+- Swagger CRUD operations
+- Health check endpoint
 
-## Project Status
+---
 
-Stage 5 completed:
+## 📌 Project Requirements
 
-- CRUD API implemented
-- Input validation implemented
-- HTTP status codes implemented
-- Swagger UI configured
-- CRUD endpoints documented
-- Swagger CRUD operations tested
-- Swagger screenshot added to the project
+This project implements the main requirements of the FlyRank **BE-01 — Build Your First CRUD API** assignment:
 
-## Notes
+- RESTful CRUD API
+- Node.js and Express.js
+- In-memory task storage
+- Input validation
+- HTTP status codes
+- 404 error handling
+- Swagger UI documentation
+- Public GitHub repository
+- README documentation
+- API testing evidence
 
-This project was developed as part of the FlyRank AI Internship — Backend AI Engineering track.
+---
 
-The API intentionally uses in-memory storage for this assignment. Database persistence is not required.
+## 📈 Project Status
+
+**Stage 6 — Publish and Documentation**
+
+Completed:
+
+- ✅ REST API implemented
+- ✅ CRUD operations implemented
+- ✅ Input validation implemented
+- ✅ HTTP status codes implemented
+- ✅ 404 handling implemented
+- ✅ Swagger UI configured
+- ✅ CRUD endpoints documented
+- ✅ Swagger CRUD operations tested
+- ✅ Swagger screenshot added
+- ✅ README documentation completed
+- ✅ API test output documented
+- ⏳ GitHub publication
+
+---
+
+## 🎓 Internship
+
+Developed as part of the:
+
+**FlyRank AI Internship — Backend AI Engineering Track**
+
+Assignment:
+
+**BE-01 — Build Your First CRUD API**
+
+---
+
+## 📝 Notes
+
+This project intentionally uses in-memory storage for the assignment.
+
+Database persistence is not required. The primary goal is to demonstrate:
+
+- Backend API fundamentals
+- RESTful design
+- CRUD operations
+- Input validation
+- HTTP status codes
+- API documentation
+- API testing
+- Git and GitHub workflow
