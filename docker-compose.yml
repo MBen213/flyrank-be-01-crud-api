@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:17
+    container_name: flyrank-postgres
+    environment:
+      POSTGRES_USER: flyrank
+      POSTGRES_PASSWORD: flyrank_dev_password
+      POSTGRES_DB: tasks
+    ports:
+      - "5432:5432"
+    volumes:
+      - flyrank-postgres-data:/var/lib/postgresql/data
+
+volumes:
+  flyrank-postgres-data:
