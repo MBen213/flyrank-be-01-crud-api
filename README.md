@@ -440,6 +440,3 @@ The assignment focuses on:
 
 **MBen213**
 
-GitHub:
-
-https://github.com/MBen213
