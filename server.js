@@ -1,36 +1,164 @@
 const express = require("express");
-const Database = require("better-sqlite3");
-
+const swaggerUi = require("swagger-ui-express");
+const taskRepository = require("./src/repositories/taskRepository");
 const app = express();
 const PORT = 3000;
 
-// Middleware
 app.use(express.json());
 
-// SQLite database
-const db = new Database("tasks.db");
+const swaggerDocument = {
+  openapi: "3.0.0",
 
-// Create tasks table if it doesn't exist
-db.exec(`
-  CREATE TABLE IF NOT EXISTS tasks (
-    id INTEGER PRIMARY KEY,
-    title TEXT NOT NULL,
-    done BOOLEAN NOT NULL DEFAULT 0
-  )
-`);
+  info: {
+    title: "Task API",
+    version: "1.0.0",
+    description: "A simple CRUD API for managing tasks",
+  },
 
-// Insert example tasks only if the table is empty
-const taskCount = db.prepare("SELECT COUNT(*) AS count FROM tasks").get();
+  servers: [
+    {
+      url: `http://localhost:${PORT}`,
+    },
+  ],
 
-if (taskCount.count === 0) {
-  const insertTask = db.prepare(
-    "INSERT INTO tasks (title, done) VALUES (?, ?)"
-  );
+  paths: {
+    "/tasks": {
+      get: {
+        summary: "Get all tasks",
+        responses: {
+          200: {
+            description: "List of all tasks",
+          },
+        },
+      },
 
-  insertTask.run("Learn Node.js", 0);
-  insertTask.run("Build a REST API", 0);
-  insertTask.run("Practice Git", 1);
-}
+      post: {
+        summary: "Create a new task",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["title"],
+                properties: {
+                  title: {
+                    type: "string",
+                    example: "Buy milk",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: "Task created successfully",
+          },
+          400: {
+            description: "Title is required",
+          },
+        },
+      },
+    },
+
+    "/tasks/{id}": {
+      get: {
+        summary: "Get a task by ID",
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: {
+              type: "integer",
+            },
+            description: "Task ID",
+          },
+        ],
+        responses: {
+          200: {
+            description: "Task found",
+          },
+          404: {
+            description: "Task not found",
+          },
+        },
+      },
+
+      put: {
+        summary: "Update a task",
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: {
+              type: "integer",
+            },
+            description: "Task ID",
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  title: {
+                    type: "string",
+                    example: "Learn Express",
+                  },
+                  done: {
+                    type: "boolean",
+                    example: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: "Task updated successfully",
+          },
+          400: {
+            description: "Invalid task data",
+          },
+          404: {
+            description: "Task not found",
+          },
+        },
+      },
+
+      delete: {
+        summary: "Delete a task",
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: {
+              type: "integer",
+            },
+            description: "Task ID",
+          },
+        ],
+        responses: {
+          204: {
+            description: "Task deleted successfully",
+          },
+          404: {
+            description: "Task not found",
+          },
+        },
+      },
+    },
+  },
+};
+
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Root endpoint
 app.get("/", (req, res) => {
@@ -49,119 +177,128 @@ app.get("/health", (req, res) => {
 });
 
 // Get all tasks
-app.get("/tasks", (req, res) => {
-  const tasks = db.prepare("SELECT * FROM tasks").all();
+app.get("/tasks", async (req, res) => {
+  try {
+    const tasks = await taskRepository.findAll();
 
-  res.json(tasks);
+    res.json(tasks);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      error: "Internal server error",
+    });
+  }
 });
 
 // Get a task by ID
-app.get("/tasks/:id", (req, res) => {
-  const id = Number(req.params.id);
+app.get("/tasks/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
 
-  const task = db
-    .prepare("SELECT * FROM tasks WHERE id = ?")
-    .get(id);
+    const task = await taskRepository.findById(id);
 
-  if (!task) {
-    return res.status(404).json({
-      error: `Task ${id} not found`,
+    if (!task) {
+      return res.status(404).json({
+        error: `Task ${id} not found`,
+      });
+    }
+
+    res.json(task);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      error: "Internal server error",
     });
   }
-
-  res.json(task);
 });
 
 // Create a new task
-app.post("/tasks", (req, res) => {
-  const { title } = req.body;
+app.post("/tasks", async (req, res) => {
+  try {
+    const { title } = req.body;
 
-  // Validation
-  if (typeof title !== "string" || title.trim() === "") {
-    return res.status(400).json({
-      error: "Title is required",
+    if (typeof title !== "string" || title.trim() === "") {
+      return res.status(400).json({
+        error: "Title is required",
+      });
+    }
+
+    const newTask = await taskRepository.create(title.trim());
+
+    res.status(201).json(newTask);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      error: "Internal server error",
     });
   }
-
-  // Insert task into database
-  const result = db
-    .prepare("INSERT INTO tasks (title, done) VALUES (?, ?)")
-    .run(title.trim(), 0);
-
-  // Get the newly created task
-  const newTask = db
-    .prepare("SELECT * FROM tasks WHERE id = ?")
-    .get(result.lastInsertRowid);
-
-  res.status(201).json(newTask);
 });
 
 // Update a task
-app.put("/tasks/:id", (req, res) => {
-  const id = Number(req.params.id);
-  const { title, done } = req.body;
+app.put("/tasks/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const { title, done } = req.body;
 
-  const task = db
-    .prepare("SELECT * FROM tasks WHERE id = ?")
-    .get(id);
+    const task = await taskRepository.findById(id);
 
-  if (!task) {
-    return res.status(404).json({
-      error: `Task ${id} not found`,
+    if (!task) {
+      return res.status(404).json({
+        error: `Task ${id} not found`,
+      });
+    }
+
+    if (
+      (title !== undefined &&
+        (typeof title !== "string" || title.trim() === "")) ||
+      (done !== undefined && typeof done !== "boolean")
+    ) {
+      return res.status(400).json({
+        error: "Invalid task data",
+      });
+    }
+
+    const updatedTitle =
+      title !== undefined ? title.trim() : task.title;
+
+    const updatedDone =
+      done !== undefined ? done : task.done;
+
+    const updatedTask = await taskRepository.update(
+      id,
+      updatedTitle,
+      updatedDone
+    );
+
+    res.json(updatedTask);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      error: "Internal server error",
     });
   }
-
-  // Validation
-  if (
-    (title !== undefined &&
-      (typeof title !== "string" || title.trim() === "")) ||
-    (done !== undefined && typeof done !== "boolean")
-  ) {
-    return res.status(400).json({
-      error: "Invalid task data",
-    });
-  }
-
-  const updatedTitle =
-    title !== undefined ? title.trim() : task.title;
-
-  const updatedDone =
-    done !== undefined ? done : task.done;
-
-  db.prepare(`
-    UPDATE tasks
-    SET title = ?, done = ?
-    WHERE id = ?
-  `).run(
-    updatedTitle,
-    updatedDone ? 1 : 0,
-    id
-  );
-
-  const updatedTask = db
-    .prepare("SELECT * FROM tasks WHERE id = ?")
-    .get(id);
-
-  res.json(updatedTask);
 });
 
 // Delete a task
-app.delete("/tasks/:id", (req, res) => {
-  const id = Number(req.params.id);
+app.delete("/tasks/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
 
-  const task = db
-    .prepare("SELECT * FROM tasks WHERE id = ?")
-    .get(id);
+    const deleted = await taskRepository.delete(id);
 
-  if (!task) {
-    return res.status(404).json({
-      error: `Task ${id} not found`,
+    if (!deleted) {
+      return res.status(404).json({
+        error: `Task ${id} not found`,
+      });
+    }
+
+    res.status(204).send();
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      error: "Internal server error",
     });
   }
-
-  db.prepare("DELETE FROM tasks WHERE id = ?").run(id);
-
-  res.status(204).send();
 });
 
 app.listen(PORT, () => {

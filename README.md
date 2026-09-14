@@ -1,213 +1,444 @@
 # 🚀 Task API
 
-A RESTful CRUD API built with **Node.js**, **Express.js**, and **SQLite** as part of the FlyRank AI Backend AI Engineering Internship.
+A RESTful CRUD API built with **Node.js**, **Express.js**, and **PostgreSQL**, containerized with **Docker Compose**, as part of the **FlyRank AI Backend AI Engineering Internship**.
 
 ## 🛠️ Tech Stack
 
-- Node.js
-- Express.js
-- SQLite
-- better-sqlite3
-- Swagger UI
+* Node.js
+* Express.js
+* PostgreSQL
+* `pg`
+* Docker
+* Docker Compose
+* dotenv
+* Swagger UI
 
 ## ✨ Features
 
-- Create, read, update, and delete tasks
-- SQLite database persistence
-- Automatic database and table creation
-- Automatic seed data on first run
-- Input validation
-- Proper HTTP status codes
-- 404 handling for unknown tasks
-- Interactive Swagger UI documentation
-- RESTful API design
+* Create, read, update, and delete tasks
+* Persistent PostgreSQL database storage
+* PostgreSQL running inside Docker
+* Persistent Docker volume
+* Automatic database and table initialization
+* Repository-based database access
+* Input validation
+* Proper HTTP status codes
+* 404 handling for unknown tasks
+* RESTful API design
+* Dockerized Node.js API
+* One-command application and database startup
 
 ## 📁 Project Structure
 
 ```text
 flyrank-be-01-crud-api/
+├── db/
+│   └── init.sql
 ├── docs/
 │   ├── sqlite-viewer.png
 │   └── swagger-ui.png
-├── node_modules/
+├── src/
+│   └── repositories/
+│       └── taskRepository.js
 ├── .gitignore
+├── .env
+├── .env.example
+├── docker-compose.yml
+├── Dockerfile
 ├── package.json
 ├── package-lock.json
 ├── README.md
-├── server.js
-└── tasks.db
-tasks.db is created automatically when the server starts and is ignored by Git.
+└── server.js
+```
 
-⚙️ Installation
+> `.env` is ignored by Git and should never be committed.
 
-Clone the repository:
+## ⚙️ Environment Configuration
 
-git clone https://github.com/MBen213/flyrank-be-01-crud-api.git
-cd flyrank-be-01-crud-api
+Create a `.env` file for local development.
 
-Install dependencies:
+Example:
 
-npm install
+```env
+DATABASE_URL=postgresql://flyrank:flyrank_dev_password@localhost:5432/tasks
+```
 
-Start the server:
+The containerized API connects to PostgreSQL through the Docker Compose service name:
 
-node server.js
+```text
+db:5432
+```
+
+The Docker Compose configuration provides the appropriate database connection to the API container.
+
+## 🐳 Running with Docker
+
+Make sure **Docker Desktop** is running.
+
+Build and start the complete stack:
+
+```bash
+docker compose up -d --build
+```
+
+This starts both:
+
+* Node.js API
+* PostgreSQL database
+
+Check the running containers:
+
+```bash
+docker compose ps
+```
 
 The API will be available at:
 
+```text
 http://localhost:3000
-🗄️ SQLite Database
+```
 
-This version replaces the previous in-memory storage with a real SQLite database.
+PostgreSQL is exposed locally on:
 
-The database file is:
+```text
+localhost:5432
+```
 
-tasks.db
+To stop the stack:
 
-It is automatically created if it does not exist.
+```bash
+docker compose down
+```
 
-The tasks table contains:
+To stop the stack without removing the persistent database volume:
 
-ColumnTypeDescription
-idINTEGERPrimary key
-titleTEXTTask title
-doneBOOLEANCompletion status
+```bash
+docker compose down
+```
 
-On the first run, three example tasks are inserted if the table is empty.
+> The PostgreSQL data is stored in a Docker volume and is therefore preserved when the containers are restarted or recreated.
 
-The database keeps the data after restarting the server.
+## 🗄️ PostgreSQL Database
 
-🔗 API Endpoints
-MethodEndpointDescription
-GET/API information
-GET/healthHealth check
-GET/tasksGet all tasks
-GET/tasks/:idGet one task
-POST/tasksCreate a task
-PUT/tasks/:idUpdate a task
-DELETE/tasks/:idDelete a task
-GET/docsSwagger UI
-📝 Create a Task
+The current implementation uses **PostgreSQL** as the persistent database.
 
-Request:
+The database schema is initialized from:
 
+```text
+db/init.sql
+```
+
+The `tasks` table contains:
+
+| Column  | Type      | Description       |
+| ------- | --------- | ----------------- |
+| `id`    | `SERIAL`  | Primary key       |
+| `title` | `TEXT`    | Task title        |
+| `done`  | `BOOLEAN` | Completion status |
+
+The database is stored using the Docker volume:
+
+```text
+flyrank-postgres-data
+```
+
+This volume ensures that task data survives PostgreSQL container restarts.
+
+## 🏗️ Architecture
+
+The current implementation uses a dedicated repository for database access:
+
+```text
+HTTP Request
+     │
+     ▼
+Express API
+     │
+     ▼
+Task Repository
+     │
+     ▼
+PostgreSQL
+```
+
+The repository is located at:
+
+```text
+src/repositories/taskRepository.js
+```
+
+The repository handles:
+
+* Fetching all tasks
+* Fetching a task by ID
+* Creating tasks
+* Updating tasks
+* Deleting tasks
+
+The BE-04 migration refactored the earlier implementation so that PostgreSQL database operations are isolated in a repository while preserving the existing CRUD API contract.
+
+## 🔗 API Endpoints
+
+| Method   | Endpoint     | Description      |
+| -------- | ------------ | ---------------- |
+| `GET`    | `/`          | API information  |
+| `GET`    | `/health`    | Health check     |
+| `GET`    | `/tasks`     | Get all tasks    |
+| `GET`    | `/tasks/:id` | Get a task by ID |
+| `POST`   | `/tasks`     | Create a task    |
+| `PUT`    | `/tasks/:id` | Update a task    |
+| `DELETE` | `/tasks/:id` | Delete a task    |
+
+## 📝 Create a Task
+
+### Request
+
+```http
 POST /tasks
 Content-Type: application/json
+```
 
-Body:
+### Body
 
+```json
 {
-  "title": "Learn SQLite"
+  "title": "Learn PostgreSQL"
 }
+```
 
-Successful response:
+### Successful Response
 
+```json
 {
-  "id": 4,
-  "title": "Learn SQLite",
-  "done": 0
+  "id": 1,
+  "title": "Learn PostgreSQL",
+  "done": false
 }
+```
 
-Status code:
+Status:
 
+```text
 201 Created
+```
 
 Invalid requests return:
 
+```text
 400 Bad Request
-🔄 Update a Task
+```
 
-Request:
+## 🔄 Update a Task
 
-PUT /tasks/4
+### Request
+
+```http
+PUT /tasks/1
 Content-Type: application/json
+```
 
-Body:
+### Body
 
+```json
 {
-  "title": "Learn SQLite Database",
+  "title": "Master PostgreSQL Backend",
   "done": true
 }
+```
 
-Successful response:
+### Successful Response
 
+```json
 {
-  "id": 4,
-  "title": "Learn SQLite Database",
-  "done": 1
+  "id": 1,
+  "title": "Master PostgreSQL Backend",
+  "done": true
 }
-🗑️ Delete a Task
+```
 
-Request:
+Status:
 
-DELETE /tasks/4
+```text
+200 OK
+```
 
-Successful response:
+## 🗑️ Delete a Task
 
+### Request
+
+```http
+DELETE /tasks/1
+```
+
+### Successful Response
+
+```text
 204 No Content
+```
 
 If the task does not exist:
 
+```text
 404 Not Found
-📚 Swagger UI
+```
 
-Interactive API documentation is available at:
+## ❤️ Health Check
 
-http://localhost:3000/docs
+The API provides a health endpoint:
 
-Swagger UI allows the API endpoints to be tested directly from the browser.
+```http
+GET /health
+```
 
-🔍 SQLite Exploration
+Successful response:
 
-The database was manually inspected using a SQLite viewer.
+```json
+{
+  "status": "ok"
+}
+```
 
-Example queries used during testing:
+## 📚 Swagger UI
 
-SELECT * FROM tasks;
-SELECT * FROM tasks WHERE done = 1;
-SELECT COUNT(*) FROM tasks;
-UPDATE tasks SET done = 1;
-DELETE FROM tasks WHERE done = 1;
+Swagger UI was part of the earlier BE-01 API implementation and is included in the project dependencies.
 
-Database viewer:
+The existing Swagger screenshot is stored at:
 
-🧪 Testing
+```text
+docs/swagger-ui.png
+```
 
-The API was tested for:
+> The current BE-04 migration focuses on PostgreSQL and Docker containerization. The `/docs` endpoint should only be considered active if the Swagger route is present in the current `server.js`.
 
-Reading tasks from SQLite
-Reading a single task
-Creating tasks
-Updating tasks
-Deleting tasks
-Invalid input
-Unknown task IDs
-Database persistence after restarting the server
-Direct SQLite queries
-Swagger UI functionality
-💾 Persistence
+## 🧪 Testing
 
-Unlike the previous in-memory implementation, tasks are now stored in SQLite.
+The API was tested through the Dockerized application.
 
-For example:
+The following operations were successfully verified:
 
-Create a task.
-Stop the server.
-Start the server again.
-Request GET /tasks.
-The task remains available.
+* Health check
+* Get all tasks
+* Get a single task
+* Create a task
+* Update a task
+* Delete a task
+* Invalid input handling
+* Unknown task handling
+* PostgreSQL connectivity
+* Application container restart
+* PostgreSQL container restart
+* Persistent Docker volume
 
-This confirms that the API uses persistent database storage.
+### CRUD Test
 
-🎯 Assignment
+A task was created through the Dockerized API:
 
-This project was developed as BE-02 — Connecting to the Database, part of the FlyRank AI Backend AI Engineering Internship.
+```json
+{
+  "id": 4,
+  "title": "Docker Persistence Test",
+  "done": false
+}
+```
 
-The assignment focuses on replacing in-memory storage with SQLite while keeping the existing CRUD API behavior.
+The task was then successfully:
 
-👨‍💻 Author
+1. Retrieved with `GET /tasks/4`
+2. Updated with `PUT /tasks/4`
+3. Deleted with `DELETE /tasks/4`
 
-MBen213
+## 💾 Persistence Test
+
+The BE-04 persistence requirement was tested using the Dockerized stack.
+
+A persistent task was stored in PostgreSQL:
+
+```text
+id: 3
+title: Persistence Test
+done: false
+```
+
+The application container was restarted:
+
+```bash
+docker compose restart app
+```
+
+The task remained available.
+
+The PostgreSQL container was then restarted:
+
+```bash
+docker compose restart db
+```
+
+The task remained available after the database container restarted.
+
+This confirms that the data is stored in PostgreSQL and persisted through the Docker volume rather than being stored only in application memory.
+
+## 🔄 Project Evolution
+
+This repository was progressively developed during the FlyRank AI Backend AI Engineering Internship.
+
+### BE-01 — Build Your First CRUD API
+
+The initial version implemented a RESTful CRUD API with:
+
+* Node.js
+* Express.js
+* In-memory task storage
+* CRUD endpoints
+* Validation
+* HTTP status codes
+* API documentation
+
+### BE-02 — Connecting to the Database
+
+The second stage replaced the in-memory storage with SQLite and introduced persistent database storage.
+
+The SQLite implementation and related evidence were part of the project's earlier development stage.
+
+### BE-04 — Containerize Your Stack
+
+The current implementation migrated the application to PostgreSQL and Docker.
+
+BE-04 introduced:
+
+* PostgreSQL
+* Docker
+* Docker Compose
+* Persistent Docker volumes
+* Environment-based database configuration
+* PostgreSQL repository
+* Containerized Node.js API
+* Application/database orchestration
+* Persistence testing across container restarts
+
+The **current implementation uses PostgreSQL + Docker Compose**.
+
+## 🎯 Assignment
+
+This project is part of:
+
+**BE-04 — Containerize Your Stack**
+
+FlyRank AI Backend AI Engineering Internship
+
+The assignment focuses on:
+
+* Running PostgreSQL in Docker
+* Using a persistent Docker volume
+* Connecting the application to PostgreSQL
+* Using environment-based database configuration
+* Implementing a PostgreSQL repository
+* Containerizing the Node.js application
+* Starting the application and database with Docker Compose
+* Proving persistence across container restarts
+
+## 👨‍💻 Author
+
+**MBen213**
 
 GitHub:
 
