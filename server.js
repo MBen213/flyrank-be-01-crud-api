@@ -11,6 +11,12 @@ const PORT = 3000;
 
 app.use(express.json());
 
+app.get("/public/info", (req, res) => {
+  res.status(200).json({
+    message: "Welcome stranger! This info is public.",
+  });
+});
+
 app.post("/auth/signup", async (req, res) => {
   const { email, password } = req.body;
 
@@ -59,6 +65,29 @@ app.post("/auth/login", async (req, res) => {
   return res.status(200).json({
     access_token: data.session.access_token,
     refresh_token: data.session.refresh_token,
+  });
+});
+ 
+app.get("/protected/profile", (req, res) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({
+      error: "Access token required",
+    });
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  if (!token) {
+    return res.status(401).json({
+      error: "Access token required",
+    });
+  }
+
+  return res.status(200).json({
+    message: "Token received",
+    token,
   });
 });
 
