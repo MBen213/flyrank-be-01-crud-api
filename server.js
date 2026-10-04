@@ -12,11 +12,19 @@ const PORT = 3000;
 
 app.use(express.json());
 
+// =========================
+// Public routes
+// =========================
+
 app.get("/public/info", (req, res) => {
   res.status(200).json({
     message: "Welcome stranger! This info is public.",
   });
 });
+
+// =========================
+// Authentication routes
+// =========================
 
 app.post("/auth/signup", async (req, res) => {
   const { email, password } = req.body;
@@ -83,7 +91,11 @@ app.post("/auth/logout", authMiddleware, async (req, res) => {
 
   return res.status(204).send();
 });
- 
+
+// =========================
+// Protected routes
+// =========================
+
 app.get("/protected/dashboard", authMiddleware, (req, res) => {
   return res.status(200).json({
     message: "Welcome to the protected dashboard",
@@ -104,8 +116,22 @@ app.get("/protected/profile", authMiddleware, (req, res) => {
   });
 });
 
+// =========================
+// Swagger documentation
+// =========================
+
 const swaggerDocument = {
   openapi: "3.0.0",
+
+  components: {
+    securitySchemes: {
+      bearerAuth: {
+        type: "http",
+        scheme: "bearer",
+        bearerFormat: "JWT",
+      },
+    },
+  },
 
   info: {
     title: "Task API",
@@ -120,9 +146,14 @@ const swaggerDocument = {
   ],
 
   paths: {
+    // =========================
+    // Tasks
+    // =========================
+
     "/tasks": {
       get: {
         summary: "Get all tasks",
+
         responses: {
           200: {
             description: "List of all tasks",
@@ -132,13 +163,17 @@ const swaggerDocument = {
 
       post: {
         summary: "Create a new task",
+
         requestBody: {
           required: true,
+
           content: {
             "application/json": {
               schema: {
                 type: "object",
+
                 required: ["title"],
+
                 properties: {
                   title: {
                     type: "string",
@@ -149,10 +184,12 @@ const swaggerDocument = {
             },
           },
         },
+
         responses: {
           201: {
             description: "Task created successfully",
           },
+
           400: {
             description: "Title is required",
           },
@@ -163,21 +200,26 @@ const swaggerDocument = {
     "/tasks/{id}": {
       get: {
         summary: "Get a task by ID",
+
         parameters: [
           {
             name: "id",
             in: "path",
             required: true,
+
             schema: {
               type: "integer",
             },
+
             description: "Task ID",
           },
         ],
+
         responses: {
           200: {
             description: "Task found",
           },
+
           404: {
             description: "Task not found",
           },
@@ -186,28 +228,35 @@ const swaggerDocument = {
 
       put: {
         summary: "Update a task",
+
         parameters: [
           {
             name: "id",
             in: "path",
             required: true,
+
             schema: {
               type: "integer",
             },
+
             description: "Task ID",
           },
         ],
+
         requestBody: {
           required: true,
+
           content: {
             "application/json": {
               schema: {
                 type: "object",
+
                 properties: {
                   title: {
                     type: "string",
                     example: "Learn Express",
                   },
+
                   done: {
                     type: "boolean",
                     example: true,
@@ -217,13 +266,16 @@ const swaggerDocument = {
             },
           },
         },
+
         responses: {
           200: {
             description: "Task updated successfully",
           },
+
           400: {
             description: "Invalid task data",
           },
+
           404: {
             description: "Task not found",
           },
@@ -232,23 +284,206 @@ const swaggerDocument = {
 
       delete: {
         summary: "Delete a task",
+
         parameters: [
           {
             name: "id",
             in: "path",
             required: true,
+
             schema: {
               type: "integer",
             },
+
             description: "Task ID",
           },
         ],
+
         responses: {
           204: {
             description: "Task deleted successfully",
           },
+
           404: {
             description: "Task not found",
+          },
+        },
+      },
+    },
+
+    // =========================
+    // Authentication
+    // =========================
+
+    "/auth/signup": {
+      post: {
+        summary: "Create a new user",
+
+        requestBody: {
+          required: true,
+
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+
+                required: ["email", "password"],
+
+                properties: {
+                  email: {
+                    type: "string",
+                    format: "email",
+                    example: "user@example.com",
+                  },
+
+                  password: {
+                    type: "string",
+                    format: "password",
+                    example: "your-password",
+                  },
+                },
+              },
+            },
+          },
+        },
+
+        responses: {
+          201: {
+            description: "User created successfully",
+          },
+
+          400: {
+            description: "Invalid signup request",
+          },
+        },
+      },
+    },
+
+    "/auth/login": {
+      post: {
+        summary: "Login",
+
+        requestBody: {
+          required: true,
+
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+
+                required: ["email", "password"],
+
+                properties: {
+                  email: {
+                    type: "string",
+                    format: "email",
+                    example: "user@example.com",
+                  },
+
+                  password: {
+                    type: "string",
+                    format: "password",
+                    example: "your-password",
+                  },
+                },
+              },
+            },
+          },
+        },
+
+        responses: {
+          200: {
+            description: "Login successful",
+          },
+
+          400: {
+            description: "Email and password are required",
+          },
+
+          401: {
+            description: "Invalid login credentials",
+          },
+        },
+      },
+    },
+
+    "/auth/logout": {
+      post: {
+        summary: "Logout",
+
+        security: [
+          {
+            bearerAuth: [],
+          },
+        ],
+
+        responses: {
+          204: {
+            description: "Logout successful",
+          },
+
+          401: {
+            description: "Invalid or missing access token",
+          },
+        },
+      },
+    },
+
+    // =========================
+    // Protected routes
+    // =========================
+
+    "/protected/profile": {
+      get: {
+        summary: "Get authenticated user profile",
+
+        security: [
+          {
+            bearerAuth: [],
+          },
+        ],
+
+        responses: {
+          200: {
+            description: "Authenticated user profile",
+          },
+
+          401: {
+            description: "Invalid or missing access token",
+          },
+        },
+      },
+    },
+
+    "/protected/dashboard": {
+      get: {
+        summary: "Get protected dashboard",
+
+        security: [
+          {
+            bearerAuth: [],
+          },
+        ],
+
+        responses: {
+          200: {
+            description: "Protected dashboard data",
+          },
+
+          401: {
+            description: "Invalid or missing access token",
+          },
+        },
+      },
+    },
+
+    "/public/info": {
+      get: {
+        summary: "Get public information",
+
+        responses: {
+          200: {
+            description: "Public information",
           },
         },
       },
@@ -256,9 +491,16 @@ const swaggerDocument = {
   },
 };
 
-app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+app.use(
+  "/docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerDocument)
+);
 
+// =========================
 // Root endpoint
+// =========================
+
 app.get("/", (req, res) => {
   res.json({
     name: "Task API",
@@ -267,12 +509,19 @@ app.get("/", (req, res) => {
   });
 });
 
+// =========================
 // Health endpoint
+// =========================
+
 app.get("/health", (req, res) => {
   res.json({
     status: "ok",
   });
 });
+
+// =========================
+// Task CRUD
+// =========================
 
 // Get all tasks
 app.get("/tasks", async (req, res) => {
@@ -282,6 +531,7 @@ app.get("/tasks", async (req, res) => {
     res.json(tasks);
   } catch (error) {
     console.error(error);
+
     res.status(500).json({
       error: "Internal server error",
     });
@@ -304,6 +554,7 @@ app.get("/tasks/:id", async (req, res) => {
     res.json(task);
   } catch (error) {
     console.error(error);
+
     res.status(500).json({
       error: "Internal server error",
     });
@@ -321,11 +572,14 @@ app.post("/tasks", async (req, res) => {
       });
     }
 
-    const newTask = await taskRepository.create(title.trim());
+    const newTask = await taskRepository.create(
+      title.trim()
+    );
 
     res.status(201).json(newTask);
   } catch (error) {
     console.error(error);
+
     res.status(500).json({
       error: "Internal server error",
     });
@@ -348,8 +602,10 @@ app.put("/tasks/:id", async (req, res) => {
 
     if (
       (title !== undefined &&
-        (typeof title !== "string" || title.trim() === "")) ||
-      (done !== undefined && typeof done !== "boolean")
+        (typeof title !== "string" ||
+          title.trim() === "")) ||
+      (done !== undefined &&
+        typeof done !== "boolean")
     ) {
       return res.status(400).json({
         error: "Invalid task data",
@@ -357,20 +613,26 @@ app.put("/tasks/:id", async (req, res) => {
     }
 
     const updatedTitle =
-      title !== undefined ? title.trim() : task.title;
+      title !== undefined
+        ? title.trim()
+        : task.title;
 
     const updatedDone =
-      done !== undefined ? done : task.done;
+      done !== undefined
+        ? done
+        : task.done;
 
-    const updatedTask = await taskRepository.update(
-      id,
-      updatedTitle,
-      updatedDone
-    );
+    const updatedTask =
+      await taskRepository.update(
+        id,
+        updatedTitle,
+        updatedDone
+      );
 
     res.json(updatedTask);
   } catch (error) {
     console.error(error);
+
     res.status(500).json({
       error: "Internal server error",
     });
@@ -382,7 +644,8 @@ app.delete("/tasks/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
 
-    const deleted = await taskRepository.delete(id);
+    const deleted =
+      await taskRepository.delete(id);
 
     if (!deleted) {
       return res.status(404).json({
@@ -393,11 +656,16 @@ app.delete("/tasks/:id", async (req, res) => {
     res.status(204).send();
   } catch (error) {
     console.error(error);
+
     res.status(500).json({
       error: "Internal server error",
     });
   }
 });
+
+// =========================
+// Start server
+// =========================
 
 app.listen(PORT, () => {
   console.log(
