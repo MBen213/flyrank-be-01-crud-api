@@ -1,79 +1,90 @@
-# 🚀 Task API
+# FlyRank Backend AI Engineering - CRUD API and Authentication
 
-A RESTful CRUD API built with **Node.js**, **Express.js**, and **PostgreSQL**, containerized with **Docker Compose**, as part of the **FlyRank AI Backend AI Engineering Internship**.
+A backend API project developed as part of the FlyRank AI Backend Engineering internship.
 
-## 🛠️ Tech Stack
+The project started as a simple CRUD API and evolved through several stages to include persistent PostgreSQL storage, Docker containerization, Supabase authentication, JWT verification, reusable authentication middleware, and OpenAPI/Swagger documentation.
 
-* Node.js
+## Features
+
+* RESTful CRUD API for tasks
+* PostgreSQL 17 database
+* Repository pattern for database access
+* Parameterized SQL queries
+* Docker and Docker Compose support
+* Automatic PostgreSQL initialization
+* Supabase Authentication
+* User signup and login
+* JWT access-token verification
+* Protected API routes
+* Reusable authentication middleware
+* Logout endpoint
+* Public and protected endpoints
+* OpenAPI/Swagger API documentation
+* Swagger Bearer JWT authentication
+* Health check endpoint
+* Environment-based configuration
+
+## Tech Stack
+
+* Node.js 22
 * Express.js
-* PostgreSQL
+* PostgreSQL 17
 * `pg`
+* `@supabase/supabase-js`
+* `swagger-ui-express`
+* `dotenv`
 * Docker
 * Docker Compose
-* dotenv
-* Swagger UI
+* Git / GitHub
 
-## ✨ Features
-
-* Create, read, update, and delete tasks
-* Persistent PostgreSQL database storage
-* PostgreSQL running inside Docker
-* Persistent Docker volume
-* Automatic database and table initialization
-* Repository-based database access
-* Input validation
-* Proper HTTP status codes
-* 404 handling for unknown tasks
-* RESTful API design
-* Dockerized Node.js API
-* One-command application and database startup
-
-## 📁 Project Structure
+## Project Structure
 
 ```text
-flyrank-be-01-crud-api/
+.
 ├── db/
 │   └── init.sql
-├── docs/
-│   ├── sqlite-viewer.png
-│   └── swagger-ui.png
 ├── src/
-│   └── repositories/
-│       └── taskRepository.js
-├── .gitignore
-├── .env
+│   ├── middleware/
+│   │   └── authMiddleware.js
+│   ├── repositories/
+│   │   └── taskRepository.js
+│   └── supabaseClient.js
+├── .dockerignore
 ├── .env.example
+├── .gitignore
 ├── docker-compose.yml
 ├── Dockerfile
-├── package.json
 ├── package-lock.json
+├── package.json
 ├── README.md
 └── server.js
 ```
 
-> `.env` is ignored by Git and should never be committed.
+## Environment Variables
 
-## ⚙️ Environment Configuration
+Create a `.env` file in the project root.
 
-Create a `.env` file for local development.
-
-Example:
+Use `.env.example` as a template:
 
 ```env
-DATABASE_URL=postgresql://flyrank:flyrank_dev_password@localhost:5432/tasks
+DATABASE_URL=postgresql://flyrank:your_password@db:5432/tasks
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_KEY=your_supabase_publishable_key
+PORT=3000
 ```
 
-The containerized API connects to PostgreSQL through the Docker Compose service name:
+Do not commit the `.env` file or real credentials to GitHub.
 
-```text
-db:5432
-```
+The project uses environment variables for:
 
-The Docker Compose configuration provides the appropriate database connection to the API container.
+* PostgreSQL connection
+* Supabase project URL
+* Supabase publishable key
+* Application port
 
-## 🐳 Running with Docker
+## Running with Docker
 
-Make sure **Docker Desktop** is running.
+Make sure Docker Desktop is running.
 
 Build and start the complete stack:
 
@@ -81,362 +92,454 @@ Build and start the complete stack:
 docker compose up -d --build
 ```
 
-This starts both:
-
-* Node.js API
-* PostgreSQL database
-
 Check the running containers:
 
 ```bash
 docker compose ps
 ```
 
-The API will be available at:
+The application will be available at:
 
 ```text
 http://localhost:3000
 ```
 
-PostgreSQL is exposed locally on:
+The PostgreSQL database runs on:
 
 ```text
 localhost:5432
 ```
 
-To stop the stack:
+To stop the containers:
 
 ```bash
 docker compose down
 ```
 
-To stop the stack without removing the persistent database volume:
+To stop the containers and remove the PostgreSQL volume:
 
 ```bash
-docker compose down
+docker compose down -v
 ```
 
-> The PostgreSQL data is stored in a Docker volume and is therefore preserved when the containers are restarted or recreated.
+## PostgreSQL
 
-## 🗄️ PostgreSQL Database
-
-The current implementation uses **PostgreSQL** as the persistent database.
-
-The database schema is initialized from:
+The PostgreSQL database is initialized automatically using:
 
 ```text
 db/init.sql
 ```
 
-The `tasks` table contains:
+The current task schema is:
 
-| Column  | Type      | Description       |
-| ------- | --------- | ----------------- |
-| `id`    | `SERIAL`  | Primary key       |
-| `title` | `TEXT`    | Task title        |
-| `done`  | `BOOLEAN` | Completion status |
-
-The database is stored using the Docker volume:
-
-```text
-flyrank-postgres-data
+```sql
+CREATE TABLE IF NOT EXISTS tasks (
+    id SERIAL PRIMARY KEY,
+    title TEXT NOT NULL,
+    done BOOLEAN NOT NULL DEFAULT FALSE
+);
 ```
 
-This volume ensures that task data survives PostgreSQL container restarts.
+The PostgreSQL data is stored in a Docker named volume so that data persists when the application container is recreated.
 
-## 🏗️ Architecture
+## Repository Pattern
 
-The current implementation uses a dedicated repository for database access:
-
-```text
-HTTP Request
-     │
-     ▼
-Express API
-     │
-     ▼
-Task Repository
-     │
-     ▼
-PostgreSQL
-```
-
-The repository is located at:
+Database access is separated from the HTTP layer using a repository:
 
 ```text
 src/repositories/taskRepository.js
 ```
 
-The repository handles:
+The repository is responsible for task database operations such as:
 
-* Fetching all tasks
-* Fetching a task by ID
-* Creating tasks
-* Updating tasks
-* Deleting tasks
+* Create
+* Read
+* Update
+* Delete
+* Count
 
-The BE-04 migration refactored the earlier implementation so that PostgreSQL database operations are isolated in a repository while preserving the existing CRUD API contract.
+SQL queries use parameterized values to reduce SQL injection risks.
 
-## 🔗 API Endpoints
+## API Endpoints
 
-| Method   | Endpoint     | Description      |
-| -------- | ------------ | ---------------- |
-| `GET`    | `/`          | API information  |
-| `GET`    | `/health`    | Health check     |
-| `GET`    | `/tasks`     | Get all tasks    |
-| `GET`    | `/tasks/:id` | Get a task by ID |
-| `POST`   | `/tasks`     | Create a task    |
-| `PUT`    | `/tasks/:id` | Update a task    |
-| `DELETE` | `/tasks/:id` | Delete a task    |
+### General
 
-## 📝 Create a Task
+| Method | Endpoint       | Description        |
+| ------ | -------------- | ------------------ |
+| GET    | `/`            | API information    |
+| GET    | `/health`      | Health check       |
+| GET    | `/public/info` | Public information |
 
-### Request
+### Authentication
+
+| Method | Endpoint       | Authentication |
+| ------ | -------------- | -------------- |
+| POST   | `/auth/signup` | Public         |
+| POST   | `/auth/login`  | Public         |
+| POST   | `/auth/logout` | Bearer JWT     |
+
+### Protected Routes
+
+| Method | Endpoint               | Authentication |
+| ------ | ---------------------- | -------------- |
+| GET    | `/protected/profile`   | Bearer JWT     |
+| GET    | `/protected/dashboard` | Bearer JWT     |
+
+### Tasks
+
+| Method | Endpoint     | Description      |
+| ------ | ------------ | ---------------- |
+| GET    | `/tasks`     | Get all tasks    |
+| GET    | `/tasks/:id` | Get a task by ID |
+| POST   | `/tasks`     | Create a task    |
+| PUT    | `/tasks/:id` | Update a task    |
+| DELETE | `/tasks/:id` | Delete a task    |
+
+## Authentication Flow
+
+Authentication is handled by Supabase Auth.
+
+### 1. Sign Up
+
+Send:
 
 ```http
-POST /tasks
+POST /auth/signup
 Content-Type: application/json
 ```
 
-### Body
+Example:
 
 ```json
 {
-  "title": "Learn PostgreSQL"
+  "email": "user@example.com",
+  "password": "your-password"
 }
 ```
 
-### Successful Response
+The API forwards the signup request to Supabase Auth.
 
-```json
-{
-  "id": 1,
-  "title": "Learn PostgreSQL",
-  "done": false
-}
-```
+### 2. Login
 
-Status:
-
-```text
-201 Created
-```
-
-Invalid requests return:
-
-```text
-400 Bad Request
-```
-
-## 🔄 Update a Task
-
-### Request
+Send:
 
 ```http
-PUT /tasks/1
+POST /auth/login
 Content-Type: application/json
 ```
 
-### Body
+Example:
 
 ```json
 {
-  "title": "Master PostgreSQL Backend",
-  "done": true
+  "email": "user@example.com",
+  "password": "your-password"
 }
 ```
 
-### Successful Response
+A successful login returns a Supabase access token.
 
-```json
-{
-  "id": 1,
-  "title": "Master PostgreSQL Backend",
-  "done": true
-}
-```
+### 3. Access a Protected Route
 
-Status:
-
-```text
-200 OK
-```
-
-## 🗑️ Delete a Task
-
-### Request
+Send the returned access token using:
 
 ```http
-DELETE /tasks/1
+Authorization: Bearer <access_token>
 ```
 
-### Successful Response
+For example:
+
+```http
+GET /protected/profile
+Authorization: Bearer <access_token>
+```
+
+### 4. Token Verification
+
+The reusable authentication middleware:
 
 ```text
+src/middleware/authMiddleware.js
+```
+
+extracts the Bearer token and verifies it using:
+
+```js
+supabase.auth.getUser(token)
+```
+
+If the token is valid, the authenticated Supabase user is attached to:
+
+```js
+req.user
+```
+
+If the token is missing, invalid, expired, or otherwise rejected, the API returns:
+
+```http
+401 Unauthorized
+```
+
+### 5. Logout
+
+The logout endpoint requires a valid Bearer token:
+
+```http
+POST /auth/logout
+Authorization: Bearer <access_token>
+```
+
+A successful logout returns:
+
+```http
 204 No Content
 ```
 
-If the task does not exist:
+## Example Authentication Requests
 
-```text
-404 Not Found
+### Login
+
+PowerShell:
+
+```powershell
+$response = curl.exe -s -X POST http://localhost:3000/auth/login `
+  -H "Content-Type: application/json" `
+  --data-binary '{"email":"user@example.com","password":"your-password"}' |
+  ConvertFrom-Json
+
+$token = $response.access_token
 ```
 
-## ❤️ Health Check
+### Access Profile
 
-The API provides a health endpoint:
+```powershell
+curl.exe http://localhost:3000/protected/profile `
+  -H "Authorization: Bearer $token"
+```
+
+### Access Dashboard
+
+```powershell
+curl.exe http://localhost:3000/protected/dashboard `
+  -H "Authorization: Bearer $token"
+```
+
+Never include real passwords or access tokens in source code, screenshots, commits, or public documentation.
+
+## HTTP Status Codes
+
+The API uses standard HTTP status codes, including:
+
+| Status | Meaning                                  |
+| ------ | ---------------------------------------- |
+| `200`  | Successful request                       |
+| `201`  | Resource created                         |
+| `204`  | Successful request with no response body |
+| `400`  | Invalid request                          |
+| `401`  | Authentication required or invalid       |
+| `404`  | Resource not found                       |
+
+## Swagger / OpenAPI
+
+Interactive API documentation is available at:
+
+```text
+http://localhost:3000/docs
+```
+
+Swagger UI documents the available API endpoints and includes Bearer authentication for protected routes.
+
+The Swagger interface provides an:
+
+```text
+Authorize
+```
+
+button that can be used to provide a JWT access token when testing protected endpoints.
+
+Protected endpoints include:
+
+* `/auth/logout`
+* `/protected/profile`
+* `/protected/dashboard`
+
+## Local Development
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Start the server:
+
+```bash
+npm start
+```
+
+The application expects the required environment variables to be available in `.env`.
+
+For the complete PostgreSQL environment, Docker Compose is recommended:
+
+```bash
+docker compose up -d --build
+```
+
+## Verification
+
+The project was tested through the following flows:
+
+### Public API
+
+```text
+GET /public/info
+```
+
+Expected:
+
+```json
+{
+  "message": "Welcome stranger! This info is public."
+}
+```
+
+### Protected API Without Token
+
+```text
+GET /protected/profile
+```
+
+Expected:
+
+```json
+{
+  "error": "Access token required"
+}
+```
+
+### Protected API With Valid Token
+
+```text
+GET /protected/profile
+```
+
+Expected response contains the authenticated user's:
+
+```text
+id
+email
+created_at
+```
+
+### Invalid Token
+
+A fake or invalid Bearer token returns:
 
 ```http
-GET /health
+401 Unauthorized
 ```
 
-Successful response:
+### Docker Integration
 
-```json
-{
-  "status": "ok"
-}
-```
-
-## 📚 Swagger UI
-
-Swagger UI was part of the earlier BE-01 API implementation and is included in the project dependencies.
-
-The existing Swagger screenshot is stored at:
+The complete Docker stack was verified with:
 
 ```text
-docs/swagger-ui.png
+Express application
+        |
+        v
+Docker Compose
+        |
+        +---- PostgreSQL
+        |
+        +---- Supabase Auth
 ```
 
-> The current BE-04 migration focuses on PostgreSQL and Docker containerization. The `/docs` endpoint should only be considered active if the Swagger route is present in the current `server.js`.
+The application successfully authenticates against Supabase while running inside the Docker container.
 
-## 🧪 Testing
+## Project Evolution
 
-The API was tested through the Dockerized application.
+The project was developed incrementally during the FlyRank Backend AI Engineering internship.
 
-The following operations were successfully verified:
+### BE-01 - CRUD API
 
-* Health check
-* Get all tasks
-* Get a single task
-* Create a task
-* Update a task
-* Delete a task
-* Invalid input handling
-* Unknown task handling
-* PostgreSQL connectivity
-* Application container restart
-* PostgreSQL container restart
-* Persistent Docker volume
-
-### CRUD Test
-
-A task was created through the Dockerized API:
-
-```json
-{
-  "id": 4,
-  "title": "Docker Persistence Test",
-  "done": false
-}
-```
-
-The task was then successfully:
-
-1. Retrieved with `GET /tasks/4`
-2. Updated with `PUT /tasks/4`
-3. Deleted with `DELETE /tasks/4`
-
-## 💾 Persistence Test
-
-The BE-04 persistence requirement was tested using the Dockerized stack.
-
-A persistent task was stored in PostgreSQL:
-
-```text
-id: 3
-title: Persistence Test
-done: false
-```
-
-The application container was restarted:
-
-```bash
-docker compose restart app
-```
-
-The task remained available.
-
-The PostgreSQL container was then restarted:
-
-```bash
-docker compose restart db
-```
-
-The task remained available after the database container restarted.
-
-This confirms that the data is stored in PostgreSQL and persisted through the Docker volume rather than being stored only in application memory.
-
-## 🔄 Project Evolution
-
-This repository was progressively developed during the FlyRank AI Backend AI Engineering Internship.
-
-### BE-01 — Build Your First CRUD API
-
-The initial version implemented a RESTful CRUD API with:
+Initial implementation:
 
 * Node.js
-* Express.js
+* Express
+* REST API
 * In-memory task storage
-* CRUD endpoints
-* Validation
-* HTTP status codes
-* API documentation
+* Swagger documentation
 
-### BE-02 — Connecting to the Database
+### BE-02 - SQLite Persistence
 
-The second stage replaced the in-memory storage with SQLite and introduced persistent database storage.
+The in-memory task storage was replaced with SQLite.
 
-The SQLite implementation and related evidence were part of the project's earlier development stage.
+This introduced:
 
-### BE-04 — Containerize Your Stack
+* Persistent storage
+* SQL queries
+* Database initialization
+* Repository-based database access
 
-The current implementation migrated the application to PostgreSQL and Docker.
+### BE-04 - PostgreSQL and Docker
 
-BE-04 introduced:
+The database layer was migrated to PostgreSQL.
 
-* PostgreSQL
-* Docker
+Docker support was added with:
+
+* PostgreSQL 17
+* Dockerfile
 * Docker Compose
-* Persistent Docker volumes
-* Environment-based database configuration
-* PostgreSQL repository
-* Containerized Node.js API
-* Application/database orchestration
-* Persistence testing across container restarts
+* PostgreSQL initialization script
+* Persistent Docker volume
+* Repository pattern
 
-The **current implementation uses PostgreSQL + Docker Compose**.
+### BE-03 - Authentication
 
-## 🎯 Assignment
+Authentication and authorization were added using Supabase Auth.
 
-This project is part of:
+This introduced:
 
-**BE-04 — Containerize Your Stack**
+* Signup
+* Login
+* Logout
+* JWT access tokens
+* JWT verification
+* Reusable authentication middleware
+* Protected profile route
+* Protected dashboard route
+* Swagger Bearer authentication
 
-FlyRank AI Backend AI Engineering Internship
+## Git Commit History
 
-The assignment focuses on:
+The implementation was developed through incremental commits:
 
-* Running PostgreSQL in Docker
-* Using a persistent Docker volume
-* Connecting the application to PostgreSQL
-* Using environment-based database configuration
-* Implementing a PostgreSQL repository
-* Containerizing the Node.js application
-* Starting the application and database with Docker Compose
-* Proving persistence across container restarts
+```text
+Stage 0: setup server and supabase client
+Stage 1: signup and login routes working
+Stage 2: public route and unverified protected route
+Stage 3: profile route token verification
+Stage 4: auth middleware and logout endpoint
+Stage 5: Swagger UI documentation with bearer auth
+Stage 6: configure Docker for Supabase auth
+```
 
-## 👨‍💻 Author
+This commit structure documents the progression of the authentication implementation.
 
-**MBen213**
+## Security Notes
 
+* `.env` is excluded from Git.
+* Real Supabase credentials must never be committed.
+* Access tokens must never be committed or published.
+* Passwords must never be stored in source code.
+* Database queries use parameterized SQL.
+* Protected routes require a valid Bearer token.
+* JWTs are verified through Supabase Auth.
+
+## Author
+
+**Mohamed Benkhaled (MBen213)**
+
+Software Engineer | Backend / Full Stack Developer | AI Engineering Student
+
+Developed as part of the FlyRank AI Backend Engineering internship.
