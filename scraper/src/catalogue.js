@@ -10,14 +10,13 @@ const USER_AGENT =
 
 const MAX_PAGES = 3;
 const REQUEST_DELAY_MS = 500;
+const TIMEOUT_MS = 10000;
 
 function cacheFileForPage(pageNumber) {
-  const filename =
-    pageNumber === 1
-      ? "catalogue-page-1.html"
-      : `catalogue-page-${pageNumber}.html`;
-
-  return path.join(CACHE_DIR, filename);
+  return path.join(
+    CACHE_DIR,
+    `catalogue-page-${pageNumber}.html`
+  );
 }
 
 function sleep(ms) {
@@ -29,8 +28,8 @@ async function loadHtml(url, pageNumber, lastRequestTime) {
 
   try {
     const html = await fs.readFile(cacheFile, "utf8");
-
     console.log(`CACHE HIT page ${pageNumber}`);
+
     return { html, lastRequestTime };
   } catch (error) {
     if (error.code !== "ENOENT") {
@@ -40,10 +39,10 @@ async function loadHtml(url, pageNumber, lastRequestTime) {
 
   if (lastRequestTime !== null) {
     const elapsed = Date.now() - lastRequestTime;
-    const remainingDelay = REQUEST_DELAY_MS - elapsed;
+    const remaining = REQUEST_DELAY_MS - elapsed;
 
-    if (remainingDelay > 0) {
-      await sleep(remainingDelay);
+    if (remaining > 0) {
+      await sleep(remaining);
     }
   }
 
@@ -54,7 +53,7 @@ async function loadHtml(url, pageNumber, lastRequestTime) {
       "User-Agent": USER_AGENT,
       Accept: "text/html",
     },
-    signal: AbortSignal.timeout(10000),
+    signal: AbortSignal.timeout(TIMEOUT_MS),
   });
 
   if (response.status !== 200) {
@@ -75,17 +74,19 @@ async function loadHtml(url, pageNumber, lastRequestTime) {
   return { html, lastRequestTime: Date.now() };
 }
 
-async function main() {
+async function discoverBooks() {
   await fs.mkdir(CACHE_DIR, { recursive: true });
 
   const allBooks = [];
   const seenUrls = new Set();
+
   let currentUrl = START_URL;
   let lastRequestTime = null;
   let pagesProcessed = 0;
 
   while (currentUrl && pagesProcessed < MAX_PAGES) {
     const pageNumber = pagesProcessed + 1;
+
     const result = await loadHtml(
       currentUrl,
       pageNumber,
@@ -123,18 +124,11 @@ async function main() {
     pagesProcessed += 1;
 
     const nextHref = $("li.next a").attr("href");
+
     currentUrl = nextHref
       ? new URL(nextHref, currentUrl).href
       : null;
   }
-
-  console.log("\nCatalogue discovery summary");
-  console.log(`Catalogue pages processed: ${pagesProcessed}`);
-  console.log(`Books discovered: ${allBooks.length}`);
-  console.log(`Unique URLs: ${seenUrls.size}`);
-
-  console.log("\nFirst 3 books:");
-  console.log(JSON.stringify(allBooks.slice(0, 3), null, 2));
 
   if (pagesProcessed !== MAX_PAGES) {
     throw new Error(
@@ -147,9 +141,29 @@ async function main() {
       `Expected 60 unique books, found ${allBooks.length} books and ${seenUrls.size} unique URLs`
     );
   }
+
+  console.log("\nCatalogue discovery summary");
+  console.log(`Catalogue pages processed: ${pagesProcessed}`);
+  console.log(`Books discovered: ${allBooks.length}`);
+  console.log(`Unique URLs: ${seenUrls.size}`);
+
+  return allBooks;
 }
 
-main().catch((error) => {
-  console.error(`Catalogue discovery failed: ${error.message}`);
-  process.exitCode = 1;
-});
+async function main() {
+  const books = await discoverBooks();
+
+  console.log("\nFirst 3 books:");
+  console.log(JSON.stringify(books.slice(0, 3), null, 2));
+}
+
+if (require.main === module) {
+  main().catch((error) => {
+    console.error(`Catalogue discovery failed: ${error.message}`);
+    process.exitCode = 1;
+  });
+}
+
+module.exports = {
+  discoverBooks,
+};

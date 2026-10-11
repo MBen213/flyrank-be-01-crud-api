@@ -58,3 +58,59 @@ Fetch -> Extract -> Normalize -> Validate -> Store -> Report
 Scraped content is treated as untrusted input. If an official API is available for a future target, it should be preferred. This project will not bypass logins, paywalls, or access restrictions.
 
 The scraper will use ordinary HTTP requests and HTML parsing because the target catalogue provides the data in the server-delivered HTML. A browser automation tool is not required for the core catalogue pipeline.</WritingBlock>
+
+ 8. Implementation Status
+
+The scraper implementation is complete for the current three-page scope.
+
+The pipeline discovers catalogue entries, fetches individual product pages, extracts book details, and writes JSON output files.
+
+### Implemented Components
+
+- `src/catalogue.js` — discovers unique book URLs from the first three catalogue pages.
+- `src/book-details.js` — fetches and caches product pages and extracts book details.
+- `src/index.js` — orchestrates the scraping run, records errors, and generates the run report.
+- `test/book-details.test.js` — tests book-detail extraction and missing-title validation.
+
+## 9. Output Files
+
+The scraper generates these files in the `output/` directory:
+
+| File | Purpose |
+|---|---|
+| `books.json` | Successfully extracted book records |
+| `errors.json` | Errors encountered during extraction |
+| `run-report.json` | Run statistics, duration, and success status |
+
+The generated output and cached HTML are excluded from version control.
+
+## 10. Validation and Test Results
+
+The latest verified run produced the following results:
+
+- Catalogue pages processed: 3
+- Books discovered: 60
+- Unique product URLs: 60
+- Books extracted: 60
+- Extraction errors: 0
+- Missing titles: 0
+- Missing prices: 0
+- Automated tests: 2 passed, 0 failed
+
+These results describe the latest verified run and may differ if the source website changes.
+
+## 11. Running the Scraper
+
+From the `scraper` directory, run:
+
+```bash
+node src/index.js
+```
+
+To run the tests:
+
+```bash
+node --test
+```
+
+The scraper reuses cached HTML when available, so subsequent runs may finish much faster than the initial run.
