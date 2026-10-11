@@ -1,0 +1,17 @@
+
+# Dependencies
+node_modules/
+
+# Downloaded HTML cache
+cache/
+
+# Generated output
+output/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Debug logs
+npm-debug.log*

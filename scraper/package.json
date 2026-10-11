@@ -1,0 +1,18 @@
+
+{
+  "name": "flyrank-polite-scraper",
+  "version": "1.0.0",
+  "description": "A polite web scraper for the Books to Scrape demo catalogue.",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "keywords": [
+    "web-scraping",
+    "nodejs",
+    "cheerio"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
