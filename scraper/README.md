@@ -68,7 +68,7 @@ The pipeline discovers catalogue entries, fetches individual product pages, extr
 ### Implemented Components
 
 - `src/catalogue.js` — discovers unique book URLs from the first three catalogue pages.
-- `src/book-details.js` — fetches and caches product pages and extracts book details.
+- `src/book-details.js` — fetches and caches product pages, extracts book details, converts `price_text` into numeric `price_gbp`, and validates required fields and prices.
 - `src/index.js` — orchestrates the scraping run, records errors, and generates the run report.
 - `test/book-details.test.js` — tests book-detail extraction and missing-title validation.
 
@@ -95,7 +95,10 @@ The latest verified run produced the following results:
 - Extraction errors: 0
 - Missing titles: 0
 - Missing prices: 0
-- Automated tests: 2 passed, 0 failed
+- Missing prices: 0
+- Missing `price_gbp` values: 0
+- Invalid `price_gbp` values: 0
+- Automated tests: 3 passed, 0 failed
 
 These results describe the latest verified run and may differ if the source website changes.
 

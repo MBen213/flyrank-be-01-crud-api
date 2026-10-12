@@ -44,6 +44,8 @@ test("extracts the expected book fields", () => {
   assert.equal(book.title, "Test Book");
   assert.equal(book.product_url, productUrl);
   assert.equal(book.price_text, "£12.99");
+  assert.equal(book.price_gbp, 12.99);
+  assert.equal(typeof book.price_gbp, "number");
   assert.match(book.availability_text, /In stock/);
   assert.match(book.rating_text, /Three/);
   assert.equal(
@@ -72,5 +74,22 @@ test("throws when the title is missing", () => {
         sourcePage
       ),
     /Missing book title/
+  );
+});
+
+test("throws when the price is invalid", () => {
+  const htmlWithInvalidPrice = sampleHtml.replace(
+    "£12.99",
+    "invalid price"
+  );
+
+  assert.throws(
+    () =>
+      extractBookDetails(
+        htmlWithInvalidPrice,
+        productUrl,
+        sourcePage
+      ),
+    /Invalid book price/
   );
 });

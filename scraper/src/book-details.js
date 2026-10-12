@@ -111,9 +111,19 @@ function extractBookDetails(html, productUrl, sourcePage) {
     throw new Error(`Missing book title: ${productUrl}`);
   }
 
+  
   if (!priceText) {
     throw new Error(`Missing book price: ${productUrl}`);
   }
+
+  const priceMatch = priceText.match(/^£\s*(\d+(?:\.\d{1,2})?)$/);
+
+  if (!priceMatch) {
+    throw new Error(`Invalid book price "${priceText}": ${productUrl}`);
+  }
+
+  const priceGbp = Number(priceMatch[1]);
+
 
   if (!availabilityText) {
     throw new Error(`Missing availability: ${productUrl}`);
@@ -123,6 +133,7 @@ function extractBookDetails(html, productUrl, sourcePage) {
     title,
     product_url: new URL(productUrl).href,
     price_text: priceText,
+    price_gbp: priceGbp,
     availability_text: availabilityText,
     rating_text: ratingText,
     description,
